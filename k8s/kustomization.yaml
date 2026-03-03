@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: digital-inspection
+
+resources:
+  - namespace.yaml
+  - inspection-service-configmap.yaml
+  - inspection-service-deployment.yaml
+  - inspection-service-service.yaml
+  - inspection-service-hpa.yaml
+  - api-gateway-configmap.yaml
+  - api-gateway-deployment.yaml
+  - api-gateway-service.yaml
+  - api-gateway-ingress.yaml
+
+# Secrets should be created separately or via external secrets operator
+# - inspection-service-secrets.yaml
+# - api-gateway-secrets.yaml
+
+commonLabels:
+  project: digital-inspection
+  managed-by: kustomize
+
+images:
+  - name: myregistry.azurecr.io/inspection-service
+    newTag: latest
+  - name: myregistry.azurecr.io/api-gateway
+    newTag: latest

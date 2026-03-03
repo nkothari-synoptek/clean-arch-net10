@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: digital-inspection
+  labels:
+    app: api-gateway
+    component: gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        component: gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: myregistry.azurecr.io/api-gateway:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: ASPNETCORE_URLS
+          value: "http://+:80"
+        - name: AzureAd__Authority
+          valueFrom:
+            configMapKeyRef:
+              name: api-gateway-config
+              key: azure-ad-authority
+        - name: AzureAd__ClientId
+          valueFrom:
+            configMapKeyRef:
+              name: api-gateway-config
+              key: azure-ad-client-id
+        - name: AzureAd__TenantId
+          valueFrom:
+            configMapKeyRef:
+              name: api-gateway-config
+              key: azure-ad-tenant-id
+        - name: ReverseProxy__Clusters__inspection-cluster__Destinations__destination1__Address
+          value: "http://inspection-service:80"
+        - name: ApplicationInsights__ConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: api-gateway-secrets
+              key: appinsights-connection-string
+        - name: ServiceName
+          value: "ApiGateway"
+        - name: ServiceVersion
+          value: "1.0.0"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

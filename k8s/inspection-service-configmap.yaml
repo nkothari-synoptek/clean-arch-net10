@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inspection-service-config
+  namespace: digital-inspection
+  labels:
+    app: inspection-service
+    component: microservice
+data:
+  azure-ad-tenant-id: "YOUR_TENANT_ID"
+  azure-ad-client-id: "YOUR_CLIENT_ID"

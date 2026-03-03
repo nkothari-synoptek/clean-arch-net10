@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: digital-inspection
+  labels:
+    name: digital-inspection
+    environment: production
