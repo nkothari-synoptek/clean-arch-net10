@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/Common.Shared/Common.Shared.csproj" />
+    <Project Path="src/ApiGateway/ApiGateway.csproj" />
+    <Project Path="src/InspectionService.Api/InspectionService.Api.csproj" />
+    <Project Path="src/InspectionService.Application/InspectionService.Application.csproj" />
+    <Project Path="src/InspectionService.Domain/InspectionService.Domain.csproj" />
+    <Project Path="src/InspectionService.Infrastructure/InspectionService.Infrastructure.csproj" />
+    <Project Path="src/InspectionService.Shared.Kernel/InspectionService.Shared.Kernel.csproj" />
+  </Folder>
+</Solution>

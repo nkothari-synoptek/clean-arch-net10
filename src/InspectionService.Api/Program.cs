@@ -32,19 +32,19 @@ try
         builder.Services.AddSwaggerGen();
     }
 
-    // Add authentication with Azure Entra ID (skip in Testing environment)
-    if (!builder.Environment.IsEnvironment("Testing"))
-    {
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureEntraId"));
-    }
+    // // Add authentication with Azure Entra ID (skip in Testing environment)
+    // if (!builder.Environment.IsEnvironment("Testing"))
+    // {
+    //     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    //         .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureEntraId"));
+    // }
 
     // Add authorization policies
     builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("CanCreateInspection", policy =>
             policy.RequireAuthenticatedUser());
-        
+
         options.AddPolicy("CanCompleteInspection", policy =>
             policy.RequireAuthenticatedUser());
         
@@ -63,12 +63,12 @@ try
             .AddRedis(
                 builder.Configuration.GetConnectionString("Redis")!,
                 name: "redis",
-                tags: new[] { "cache", "redis" })
-            .AddAzureServiceBusTopic(
-                builder.Configuration.GetConnectionString("ServiceBus")!,
-                topicName: "inspection-events",
-                name: "servicebus",
-                tags: new[] { "messaging", "servicebus" });
+                tags: new[] { "cache", "redis" });
+            // .AddAzureServiceBusTopic(
+            //     builder.Configuration.GetConnectionString("ServiceBus")!,
+            //     topicName: "inspection-events",
+            //     name: "servicebus",
+            //     tags: new[] { "messaging", "servicebus" });
     }
 
     // Register Application layer services
@@ -128,7 +128,7 @@ try
     
     app.Run();
 }
-catch (Exception ex)
+catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
 }

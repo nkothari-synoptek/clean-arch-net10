@@ -1,6 +1,6 @@
 # Digital Inspection System
 
-A .NET 8.0 microservices architecture built with Clean Architecture principles.
+A .NET 10.0 microservices architecture built with Clean Architecture principles.
 
 ## Solution Structure
 
@@ -22,7 +22,7 @@ DigitalInspectionSystem/
 
 ### Prerequisites
 
-- .NET 8.0 SDK or later
+- .NET 10.0 SDK
 - Docker Desktop (for local development with Redis, PostgreSQL, etc.)
 - Azure CLI (for deployment)
 
