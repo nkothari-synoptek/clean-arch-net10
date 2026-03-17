@@ -23,8 +23,12 @@ public static class ServiceBusExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString = configuration.GetConnectionString("ServiceBus");
-        var fullyQualifiedNamespace = configuration["ServiceBus:FullyQualifiedNamespace"];
+        var connectionString =
+            configuration.GetConnectionString("ServiceBus") ??
+            configuration["ServiceSecrets:Messaging:ServiceBusConnectionString"];
+        var fullyQualifiedNamespace =
+            configuration["ServiceBus:FullyQualifiedNamespace"] ??
+            configuration["ServiceSecrets:Messaging:ServiceBusFullyQualifiedNamespace"];
 
         // Register ServiceBusClient as singleton (recommended by Azure SDK)
         services.AddSingleton(sp =>

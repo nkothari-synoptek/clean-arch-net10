@@ -34,15 +34,21 @@ public static class CommonSharedExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         // Add Redis cache if configured
-        var redisConnectionString = configuration.GetConnectionString("Redis");
+        var redisConnectionString =
+            configuration.GetConnectionString("Redis") ??
+            configuration["ServiceSecrets:Cache:RedisConnectionString"];
         if (!string.IsNullOrWhiteSpace(redisConnectionString))
         {
             services.AddRedisCache(configuration);
         }
 
         // Add Service Bus if configured
-        var serviceBusConnectionString = configuration.GetConnectionString("ServiceBus");
-        var serviceBusNamespace = configuration["ServiceBus:FullyQualifiedNamespace"];
+        var serviceBusConnectionString =
+            configuration.GetConnectionString("ServiceBus") ??
+            configuration["ServiceSecrets:Messaging:ServiceBusConnectionString"];
+        var serviceBusNamespace =
+            configuration["ServiceBus:FullyQualifiedNamespace"] ??
+            configuration["ServiceSecrets:Messaging:ServiceBusFullyQualifiedNamespace"];
         if (!string.IsNullOrWhiteSpace(serviceBusConnectionString) || 
             !string.IsNullOrWhiteSpace(serviceBusNamespace))
         {

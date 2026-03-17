@@ -1,4 +1,5 @@
 using Common.Shared;
+using InspectionService.Infrastructure.Configuration;
 using InspectionService.Application.Inspections.Interfaces;
 using InspectionService.Infrastructure.Messaging;
 using InspectionService.Infrastructure.Persistence;
@@ -6,6 +7,7 @@ using InspectionService.Infrastructure.Persistence.Repositories.Inspections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace InspectionService.Infrastructure;
 
@@ -21,13 +23,25 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddOptions<ServiceSecretsOptions>()
+            .Bind(configuration.GetRequiredSection(ServiceSecretsOptions.SectionName))
+            .ValidateDataAnnotations()
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Database.ConnectionString),
+                $"{ServiceSecretsOptions.SectionName}:Database:ConnectionString is required.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Cache.RedisConnectionString),
+                $"{ServiceSecretsOptions.SectionName}:Cache:RedisConnectionString is required.")
+            .ValidateOnStart();
+
         // Register Common.Shared services (Redis cache, Service Bus, OpenTelemetry, etc.)
         services.AddCommonSharedServices(configuration);
 
         // Register DbContext with PostgreSQL
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var secretsOptions = serviceProvider.GetRequiredService<IOptions<ServiceSecretsOptions>>().Value;
+            var connectionString = secretsOptions.Database.ConnectionString;
             options.UseNpgsql(
                 connectionString,
                 npgsqlOptions =>

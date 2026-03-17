@@ -1,26 +1,31 @@
 using InspectionService.Api.Middleware;
 using InspectionService.Application;
+using InspectionService.Infrastructure.Configuration;
 using InspectionService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Serilog;
 
+var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddAzureKeyVaultIfConfigured();
+
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
-        .Build())
+    .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 try
 {
     Log.Information("Starting InspectionService.Api");
 
-    var builder = WebApplication.CreateBuilder(args);
-
     // Configure Serilog
     builder.Host.UseSerilog();
+
+    var serviceSecrets = builder.Configuration
+        .GetRequiredSection(ServiceSecretsOptions.SectionName)
+        .Get<ServiceSecretsOptions>()
+        ?? throw new InvalidOperationException(
+            $"{ServiceSecretsOptions.SectionName} section is required.");
 
     // Add services to the container
     builder.Services.AddControllers();
@@ -57,11 +62,11 @@ try
     {
         builder.Services.AddHealthChecks()
             .AddNpgSql(
-                builder.Configuration.GetConnectionString("DefaultConnection")!,
+                serviceSecrets.Database.ConnectionString,
                 name: "database",
                 tags: new[] { "db", "postgresql" })
             .AddRedis(
-                builder.Configuration.GetConnectionString("Redis")!,
+                serviceSecrets.Cache.RedisConnectionString,
                 name: "redis",
                 tags: new[] { "cache", "redis" });
             // .AddAzureServiceBusTopic(

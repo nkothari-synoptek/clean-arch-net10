@@ -22,7 +22,8 @@ public static class CacheExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString = configuration.GetConnectionString("Redis")
+        var connectionString = (configuration.GetConnectionString("Redis")
+            ?? configuration["ServiceSecrets:Cache:RedisConnectionString"])
             ?? throw new InvalidOperationException("Redis connection string is not configured.");
 
         // Register IConnectionMultiplexer as singleton (recommended by StackExchange.Redis)
