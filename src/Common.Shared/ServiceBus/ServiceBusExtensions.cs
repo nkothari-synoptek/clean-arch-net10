@@ -1,5 +1,6 @@
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using Common.Shared.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,12 +24,8 @@ public static class ServiceBusExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString =
-            configuration.GetConnectionString("ServiceBus") ??
-            configuration["ServiceSecrets:Messaging:ServiceBusConnectionString"];
-        var fullyQualifiedNamespace =
-            configuration["ServiceBus:FullyQualifiedNamespace"] ??
-            configuration["ServiceSecrets:Messaging:ServiceBusFullyQualifiedNamespace"];
+        var connectionString = configuration.GetServiceBusConnectionString();
+        var fullyQualifiedNamespace = configuration.GetServiceBusFullyQualifiedNamespace();
 
         // Register ServiceBusClient as singleton (recommended by Azure SDK)
         services.AddSingleton(sp =>
