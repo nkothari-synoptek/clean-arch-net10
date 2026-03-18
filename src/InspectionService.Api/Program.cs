@@ -1,3 +1,4 @@
+using InspectionService.Api.HealthChecks;
 using InspectionService.Api.Middleware;
 using InspectionService.Application;
 using InspectionService.Infrastructure.Configuration;
@@ -20,12 +21,6 @@ try
 
     // Configure Serilog
     builder.Host.UseSerilog();
-
-    var serviceSecrets = builder.Configuration
-        .GetRequiredSection(ServiceSecretsOptions.SectionName)
-        .Get<ServiceSecretsOptions>()
-        ?? throw new InvalidOperationException(
-            $"{ServiceSecretsOptions.SectionName} section is required.");
 
     // Add services to the container
     builder.Services.AddControllers();
@@ -61,12 +56,10 @@ try
     if (!builder.Environment.IsEnvironment("Testing"))
     {
         builder.Services.AddHealthChecks()
-            .AddNpgSql(
-                serviceSecrets.Database.ConnectionString,
+            .AddCheck<PostgresSecretHealthCheck>(
                 name: "database",
                 tags: new[] { "db", "postgresql" })
-            .AddRedis(
-                serviceSecrets.Cache.RedisConnectionString,
+            .AddCheck<RedisSecretHealthCheck>(
                 name: "redis",
                 tags: new[] { "cache", "redis" });
             // .AddAzureServiceBusTopic(

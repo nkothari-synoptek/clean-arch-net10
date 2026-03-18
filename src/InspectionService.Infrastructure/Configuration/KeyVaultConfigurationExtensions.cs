@@ -1,4 +1,5 @@
 using Azure.Identity;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Microsoft.Extensions.Configuration;
 
 namespace InspectionService.Infrastructure.Configuration;
@@ -24,9 +25,11 @@ public static class KeyVaultConfigurationExtensions
             credentialOptions.ManagedIdentityClientId = keyVaultOptions.ManagedIdentityClientId;
         }
 
+        var keyVaultConfigurationOptions = CreateConfigurationOptions(keyVaultOptions);
         configuration.AddAzureKeyVault(
             new Uri(keyVaultOptions.VaultUri),
-            new DefaultAzureCredential(credentialOptions));
+            new DefaultAzureCredential(credentialOptions),
+            keyVaultConfigurationOptions);
 
         return configuration;
     }
@@ -53,10 +56,22 @@ public static class KeyVaultConfigurationExtensions
             credentialOptions.ManagedIdentityClientId = keyVaultOptions.ManagedIdentityClientId;
         }
 
+        var keyVaultConfigurationOptions = CreateConfigurationOptions(keyVaultOptions);
         configurationBuilder.AddAzureKeyVault(
             new Uri(keyVaultOptions.VaultUri),
-            new DefaultAzureCredential(credentialOptions));
+            new DefaultAzureCredential(credentialOptions),
+            keyVaultConfigurationOptions);
 
         return configurationBuilder;
+    }
+
+    private static AzureKeyVaultConfigurationOptions CreateConfigurationOptions(AzureKeyVaultOptions keyVaultOptions)
+    {
+        return new AzureKeyVaultConfigurationOptions
+        {
+            ReloadInterval = keyVaultOptions.ReloadEnabled
+                ? keyVaultOptions.ReloadInterval ?? TimeSpan.FromMinutes(5)
+                : null
+        };
     }
 }

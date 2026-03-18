@@ -40,7 +40,7 @@ public static class DependencyInjection
         // Register DbContext with PostgreSQL
         services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
         {
-            var secretsOptions = serviceProvider.GetRequiredService<IOptions<ServiceSecretsOptions>>().Value;
+            var secretsOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ServiceSecretsOptions>>().CurrentValue;
             var connectionString = secretsOptions.Database.ConnectionString;
             options.UseNpgsql(
                 connectionString,

@@ -21,4 +21,14 @@ public sealed class AzureKeyVaultOptions
     /// Optional user-assigned managed identity client id.
     /// </summary>
     public string? ManagedIdentityClientId { get; set; }
+
+    /// <summary>
+    /// Enables periodic secret reload from Key Vault at runtime.
+    /// </summary>
+    public bool ReloadEnabled { get; set; }
+
+    /// <summary>
+    /// Interval used to poll Key Vault for updated secret values.
+    /// </summary>
+    public TimeSpan? ReloadInterval { get; set; }
 }
