@@ -7,10 +7,25 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddAzureKeyVaultIfConfigured();
+// Bootstrap console logger so Key Vault failures are visible before full Serilog is configured
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-// Configure Serilog
+var builder = WebApplication.CreateBuilder(args);
+
+try
+{
+    builder.Configuration.AddAzureKeyVaultIfConfigured();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Failed to load Azure Key Vault configuration. Check AzureKeyVault settings and credentials.");
+    Log.CloseAndFlush();
+    return;
+}
+
+// Reconfigure Serilog with full settings now that Key Vault secrets are available
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();

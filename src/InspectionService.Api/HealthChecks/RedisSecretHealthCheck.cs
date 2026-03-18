@@ -7,10 +7,14 @@ namespace InspectionService.Api.HealthChecks;
 
 public sealed class RedisSecretHealthCheck : IHealthCheck
 {
+    private readonly IConnectionMultiplexer _connectionMultiplexer;
     private readonly IOptionsMonitor<ServiceSecretsOptions> _serviceSecretsMonitor;
 
-    public RedisSecretHealthCheck(IOptionsMonitor<ServiceSecretsOptions> serviceSecretsMonitor)
+    public RedisSecretHealthCheck(
+        IConnectionMultiplexer connectionMultiplexer,
+        IOptionsMonitor<ServiceSecretsOptions> serviceSecretsMonitor)
     {
+        _connectionMultiplexer = connectionMultiplexer;
         _serviceSecretsMonitor = serviceSecretsMonitor;
     }
 
@@ -26,8 +30,7 @@ public sealed class RedisSecretHealthCheck : IHealthCheck
 
         try
         {
-            await using var connection = await ConnectionMultiplexer.ConnectAsync(connectionString);
-            var database = connection.GetDatabase();
+            var database = _connectionMultiplexer.GetDatabase();
             await database.PingAsync();
 
             return HealthCheckResult.Healthy();
