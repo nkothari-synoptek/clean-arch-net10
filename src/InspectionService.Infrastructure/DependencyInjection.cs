@@ -23,15 +23,10 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddSingleton<IValidateOptions<ServiceSecretsOptions>, ServiceSecretsOptionsValidator>();
+
         services.AddOptions<ServiceSecretsOptions>()
             .Bind(configuration.GetRequiredSection(ServiceSecretsOptions.SectionName))
-            .ValidateDataAnnotations()
-            .Validate(
-                options => !string.IsNullOrWhiteSpace(options.Database.ConnectionString),
-                $"{ServiceSecretsOptions.SectionName}:Database:ConnectionString is required.")
-            .Validate(
-                options => !string.IsNullOrWhiteSpace(options.Cache.RedisConnectionString),
-                $"{ServiceSecretsOptions.SectionName}:Cache:RedisConnectionString is required.")
             .ValidateOnStart();
 
         // Register Common.Shared services (Redis cache, Service Bus, OpenTelemetry, etc.)
