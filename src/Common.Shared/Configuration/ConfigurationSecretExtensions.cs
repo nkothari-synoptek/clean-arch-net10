@@ -7,6 +7,14 @@ namespace Common.Shared.Configuration;
 /// </summary>
 public static class ConfigurationSecretExtensions
 {
+    public static string? GetDatabaseConnectionString(this IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        return configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ServiceSecrets:Database:ConnectionString"];
+    }
+
     public static string? GetRedisConnectionString(this IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);

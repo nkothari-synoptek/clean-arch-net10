@@ -1,4 +1,5 @@
 using Common.Shared;
+using Common.Shared.Configuration;
 using {{ServiceName}}.Application.{{ModuleName}}.Interfaces;
 using {{ServiceName}}.Infrastructure.Messaging;
 using {{ServiceName}}.Infrastructure.Persistence;
@@ -27,7 +28,7 @@ public static class DependencyInjection
         // Register DbContext with PostgreSQL
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var connectionString = configuration.GetDatabaseConnectionString();
             options.UseNpgsql(
                 connectionString,
                 npgsqlOptions =>
