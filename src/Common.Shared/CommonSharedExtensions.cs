@@ -1,5 +1,6 @@
 using Common.Shared.Authentication;
 using Common.Shared.Caching;
+using Common.Shared.Configuration;
 using Common.Shared.Logging;
 using Common.Shared.Observability;
 using Common.Shared.ServiceBus;
@@ -34,16 +35,16 @@ public static class CommonSharedExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         // Add Redis cache if configured
-        var redisConnectionString = configuration.GetConnectionString("Redis");
+        var redisConnectionString = configuration.GetRedisConnectionString();
         if (!string.IsNullOrWhiteSpace(redisConnectionString))
         {
             services.AddRedisCache(configuration);
         }
 
         // Add Service Bus if configured
-        var serviceBusConnectionString = configuration.GetConnectionString("ServiceBus");
-        var serviceBusNamespace = configuration["ServiceBus:FullyQualifiedNamespace"];
-        if (!string.IsNullOrWhiteSpace(serviceBusConnectionString) || 
+        var serviceBusConnectionString = configuration.GetServiceBusConnectionString();
+        var serviceBusNamespace = configuration.GetServiceBusFullyQualifiedNamespace();
+        if (!string.IsNullOrWhiteSpace(serviceBusConnectionString) ||
             !string.IsNullOrWhiteSpace(serviceBusNamespace))
         {
             services.AddServiceBus(configuration);

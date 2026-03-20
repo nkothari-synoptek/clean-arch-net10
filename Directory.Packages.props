@@ -28,6 +28,7 @@
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <!-- Azure Identity for Managed Identity -->
     <PackageVersion Include="Azure.Identity" Version="1.18.0" />
+    <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <!-- Polly for Resilience -->
     <PackageVersion Include="Polly" Version="8.6.5" />
     <PackageVersion Include="Polly.Extensions.Http" Version="3.0.0" />

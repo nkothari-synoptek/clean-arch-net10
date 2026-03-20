@@ -1,11 +1,13 @@
 using Common.Shared;
 using {{ServiceName}}.Application.{{ModuleName}}.Interfaces;
+using {{ServiceName}}.Infrastructure.Configuration;
 using {{ServiceName}}.Infrastructure.Messaging;
 using {{ServiceName}}.Infrastructure.Persistence;
 using {{ServiceName}}.Infrastructure.Persistence.Repositories.{{ModuleName}};
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace {{ServiceName}}.Infrastructure;
 
@@ -21,13 +23,20 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddSingleton<IValidateOptions<ServiceSecretsOptions>, ServiceSecretsOptionsValidator>();
+
+        services.AddOptions<ServiceSecretsOptions>()
+            .Bind(configuration.GetRequiredSection(ServiceSecretsOptions.SectionName))
+            .ValidateOnStart();
+
         // Register Common.Shared services (Redis cache, Service Bus, OpenTelemetry, etc.)
         services.AddCommonSharedServices(configuration);
 
         // Register DbContext with PostgreSQL
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var secretsOptions = serviceProvider.GetRequiredService<IOptionsMonitor<ServiceSecretsOptions>>().CurrentValue;
+            var connectionString = secretsOptions.Database.ConnectionString;
             options.UseNpgsql(
                 connectionString,
                 npgsqlOptions =>
