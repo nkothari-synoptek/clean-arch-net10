@@ -71,26 +71,39 @@ try
         //     policy.RequireAuthenticatedUser());
     });
 
-    // Add health checks
+    // Add health checks conditionally based on configured secrets.
     // TODO: Replace with custom health check classes that use IOptionsMonitor<ServiceSecretsOptions>
     // for secret-aware health checks (see InspectionService.Api/HealthChecks for examples).
     var dbConnectionString = builder.Configuration.GetDatabaseConnectionString();
     var redisConnectionString = builder.Configuration.GetRedisConnectionString();
     var serviceBusConnectionString = builder.Configuration.GetServiceBusConnectionString();
-    builder.Services.AddHealthChecks()
-        .AddNpgSql(
-            dbConnectionString!,
+
+    var healthCheckBuilder = builder.Services.AddHealthChecks();
+
+    if (!string.IsNullOrWhiteSpace(dbConnectionString))
+    {
+        healthCheckBuilder.AddNpgSql(
+            dbConnectionString,
             name: "database",
-            tags: new[] { "db", "postgresql" })
-        .AddRedis(
-            redisConnectionString!,
+            tags: new[] { "db", "postgresql" });
+    }
+
+    if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    {
+        healthCheckBuilder.AddRedis(
+            redisConnectionString,
             name: "redis",
-            tags: new[] { "cache", "redis" })
-        .AddAzureServiceBusTopic(
-            serviceBusConnectionString!,
+            tags: new[] { "cache", "redis" });
+    }
+
+    if (!string.IsNullOrWhiteSpace(serviceBusConnectionString))
+    {
+        healthCheckBuilder.AddAzureServiceBusTopic(
+            serviceBusConnectionString,
             topicName: "{{serviceName}}-events",
             name: "servicebus",
             tags: new[] { "messaging", "servicebus" });
+    }
 
     // Register Application layer services
     builder.Services.AddApplication();
