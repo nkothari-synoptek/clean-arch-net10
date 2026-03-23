@@ -1,3 +1,4 @@
+using Common.Shared.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -22,8 +23,9 @@ public static class CacheExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var connectionString = configuration.GetConnectionString("Redis")
-            ?? throw new InvalidOperationException("Redis connection string is not configured.");
+        var connectionString = configuration.GetRedisConnectionString();
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("Redis connection string is not configured.");
 
         // Register IConnectionMultiplexer as singleton (recommended by StackExchange.Redis)
         services.AddSingleton<IConnectionMultiplexer>(sp =>

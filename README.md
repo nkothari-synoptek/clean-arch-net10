@@ -78,3 +78,4 @@ See the `docs/` folder for:
 - Developer onboarding guide
 - Architecture decision records
 - Deployment guides
+- Azure Key Vault runtime secret configuration (`docs/KEYVAULT_CONFIGURATION.md`)

@@ -196,6 +196,8 @@ Write-Host "  Infrastructure layer packages..." -ForegroundColor Yellow
 dotnet add "$InfrastructureProject/$ServiceFullName.Infrastructure.csproj" package Microsoft.EntityFrameworkCore
 dotnet add "$InfrastructureProject/$ServiceFullName.Infrastructure.csproj" package Npgsql.EntityFrameworkCore.PostgreSQL
 dotnet add "$InfrastructureProject/$ServiceFullName.Infrastructure.csproj" package Microsoft.EntityFrameworkCore.Design
+dotnet add "$InfrastructureProject/$ServiceFullName.Infrastructure.csproj" package Azure.Identity
+dotnet add "$InfrastructureProject/$ServiceFullName.Infrastructure.csproj" package Azure.Extensions.AspNetCore.Configuration.Secrets
 
 # API layer packages
 Write-Host "  API layer packages..." -ForegroundColor Yellow
@@ -262,6 +264,10 @@ Write-Host "  Created Infrastructure/Persistence structure" -ForegroundColor Yel
 $infraMessagingPath = Join-Path $InfrastructureProject "Messaging"
 New-Item -ItemType Directory -Force -Path $infraMessagingPath | Out-Null
 Write-Host "  Created Infrastructure/Messaging structure" -ForegroundColor Yellow
+
+$infraConfigPath = Join-Path $InfrastructureProject "Configuration"
+New-Item -ItemType Directory -Force -Path $infraConfigPath | Out-Null
+Write-Host "  Created Infrastructure/Configuration structure" -ForegroundColor Yellow
 
 # Create API module structure
 $apiModulePath = Join-Path $ApiProject "Controllers"

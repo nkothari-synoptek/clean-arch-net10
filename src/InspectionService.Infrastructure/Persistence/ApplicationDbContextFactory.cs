@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using InspectionService.Infrastructure.Configuration;
 
 namespace InspectionService.Infrastructure.Persistence;
 
@@ -21,15 +22,29 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
             apiProjectPath = Path.GetFullPath(Path.Combine(currentDirectory, "src", "InspectionService.Api"));
         }
 
-        var configuration = new ConfigurationBuilder()
+        var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(apiProjectPath)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
-            .AddEnvironmentVariables()
-            .Build();
+            .AddEnvironmentVariables();
 
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+        var preKeyVaultConfiguration = configurationBuilder.Build();
+        configurationBuilder.AddAzureKeyVaultIfConfigured(preKeyVaultConfiguration);
+
+        var configuration = configurationBuilder.Build();
+
+        var serviceSecrets = configuration
+            .GetRequiredSection(ServiceSecretsOptions.SectionName)
+            .Get<ServiceSecretsOptions>()
+            ?? throw new InvalidOperationException(
+                $"{ServiceSecretsOptions.SectionName} configuration section was not found.");
+
+        var connectionString = serviceSecrets.Database.ConnectionString;
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                $"{ServiceSecretsOptions.SectionName}:Database:ConnectionString was not found.");
+        }
 
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
         optionsBuilder.UseNpgsql(connectionString, npgsqlOptions =>

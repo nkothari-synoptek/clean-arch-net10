@@ -1,23 +1,38 @@
+using Common.Shared.Configuration;
 using {{ServiceName}}.Api.Middleware;
 using {{ServiceName}}.Application;
 using {{ServiceName}}.Infrastructure;
+using {{ServiceName}}.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Serilog;
 
-// Configure Serilog
+// Bootstrap console logger so Key Vault failures are visible before full Serilog is configured
 Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
-        .Build())
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+var builder = WebApplication.CreateBuilder(args);
+
+try
+{
+    builder.Configuration.AddAzureKeyVaultIfConfigured();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Failed to load Azure Key Vault configuration. Check AzureKeyVault settings and credentials.");
+    Log.CloseAndFlush();
+    return;
+}
+
+// Reconfigure Serilog with full settings now that Key Vault secrets are available
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
 
 try
 {
     Log.Information("Starting {{ServiceName}}.Api");
-
-    var builder = WebApplication.CreateBuilder(args);
 
     // Configure Serilog
     builder.Host.UseSerilog();
@@ -56,21 +71,39 @@ try
         //     policy.RequireAuthenticatedUser());
     });
 
-    // Add health checks
-    builder.Services.AddHealthChecks()
-        .AddNpgSql(
-            builder.Configuration.GetConnectionString("DefaultConnection")!,
+    // Add health checks conditionally based on configured secrets.
+    // TODO: Replace with custom health check classes that use IOptionsMonitor<ServiceSecretsOptions>
+    // for secret-aware health checks (see InspectionService.Api/HealthChecks for examples).
+    var dbConnectionString = builder.Configuration.GetDatabaseConnectionString();
+    var redisConnectionString = builder.Configuration.GetRedisConnectionString();
+    var serviceBusConnectionString = builder.Configuration.GetServiceBusConnectionString();
+
+    var healthCheckBuilder = builder.Services.AddHealthChecks();
+
+    if (!string.IsNullOrWhiteSpace(dbConnectionString))
+    {
+        healthCheckBuilder.AddNpgSql(
+            dbConnectionString,
             name: "database",
-            tags: new[] { "db", "postgresql" })
-        .AddRedis(
-            builder.Configuration.GetConnectionString("Redis")!,
+            tags: new[] { "db", "postgresql" });
+    }
+
+    if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    {
+        healthCheckBuilder.AddRedis(
+            redisConnectionString,
             name: "redis",
-            tags: new[] { "cache", "redis" })
-        .AddAzureServiceBusTopic(
-            builder.Configuration.GetConnectionString("ServiceBus")!,
+            tags: new[] { "cache", "redis" });
+    }
+
+    if (!string.IsNullOrWhiteSpace(serviceBusConnectionString))
+    {
+        healthCheckBuilder.AddAzureServiceBusTopic(
+            serviceBusConnectionString,
             topicName: "{{serviceName}}-events",
             name: "servicebus",
             tags: new[] { "messaging", "servicebus" });
+    }
 
     // Register Application layer services
     builder.Services.AddApplication();
